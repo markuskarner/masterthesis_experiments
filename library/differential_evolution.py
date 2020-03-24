@@ -1,4 +1,5 @@
 import numpy as np
+from datetime import datetime
 
 
 def initiate_population(population_size: int = 400
@@ -170,6 +171,7 @@ def evaluate_fitness_cifar10(model, target_category, image, population=None):
     if population is not None:
         population_fitness = []
         num_population = population.shape[0]
+
         perturbated_images = add_perturbation_cifar10(population
                                                       , original_image=image)
 
@@ -227,17 +229,15 @@ def differential_evolution_cifar10(model, target_category, original_image
 
         :return:
     """
+
+    OverallTimeTracker = datetime.now()
     population = initiate_population(population_size)
-    max_fitness = 0
 
     for g in range(generations):
-        print("Generation %0d. Maximum fitness: %4d" % g, max_fitness)
-        # early_stopping
-        if early_stopping:
-            if max_fitness >= early_stopping_threshold:
-                break
-
         mutated_population = mutate_population(population)
+        ##
+        timetracker = datetime.now()
+        ##
         fitness_population = evaluate_fitness_cifar10(model
                                                       , target_category
                                                       , original_image
@@ -249,7 +249,7 @@ def differential_evolution_cifar10(model, target_category, original_image
                                                           , mutated_population)
 
         #Replace old generation
-        for i in population_size:
+        for i in range(population_size):
             if fitness_mut_population[i] >= fitness_population [i]:
                 population[i] = mutated_population[i]
 
@@ -259,6 +259,21 @@ def differential_evolution_cifar10(model, target_category, original_image
         #the next generation at this point)
 
         index_argmax = np.argmax(fitness_mut_population)
-        max_fitness = mutated_population[index_argmax]
+        max_fitness = fitness_mut_population[index_argmax]
 
-    #return the best perturbation incl. stats
+        print("Generation %0d. Maximum fitness: %4d" % (g, max_fitness))
+        # early_stopping
+        if early_stopping:
+            if max_fitness >= early_stopping_threshold:
+                print("early stopping :)")
+                break
+
+    print("Overall time: " + str(datetime.now() - OverallTimeTracker))
+
+    return_array = np.append(population[index_argmax]
+                             , np.array(target_category))
+    return_array = np.append(return_array, np.array(max_fitness))
+
+    return return_array
+
+    #TODO: return the best perturbation incl. stats
