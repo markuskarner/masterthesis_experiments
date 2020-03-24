@@ -19,5 +19,5 @@ y_test = keras.utils.to_categorical(y_test, num_classes)
 for i in range(10):
     if i != np.argmax(y_test[1]):
         print(de.differential_evolution_cifar10(model, i, x_test[1]
-                                                , generations=10))
+                                                , generations=100))
 
