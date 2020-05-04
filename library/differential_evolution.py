@@ -4,7 +4,8 @@ from datetime import datetime
 
 def initiate_population(population_size: int = 400
                         , x_dim: int = 32
-                        , y_dim: int = 32):
+                        , y_dim: int = 32
+                        , color_scheme: str = 'RGB'):
     """Function to initiate a population of image perturbations for CIFAR-10
 
     The Function will return an array of one-pixel perturbations
@@ -23,20 +24,35 @@ def initiate_population(population_size: int = 400
             x dimension of images (default is 32)
         :param y_dim: int, optional
             y dimension of images (default is 32)
+        :param color_scheme: str, optional
+            color_scheme for population, either 'RGB' or 'bw' for black-white
+            (default is 'RGB')
 
     Return:
-        :return array of one-pixel perturbations for images in colorcode = RGB
+        :return array of one-pixel perturbations for images in color-scheme
+            RGB or bw (black and white)
+            if color_scheme input is neither RGB nor bw return -1
     """
     population = []
 
     for i in range(population_size):
         random_x = np.random.randint(0, x_dim)
         random_y = np.random.randint(0, y_dim)
-        random_r = np.random.randint(0, 256)
-        random_g = np.random.randint(0, 256)
-        random_b = np.random.randint(0, 256)
 
-        v = [random_x, random_y, random_r, random_b, random_g]
+        if color_scheme == 'RGB':
+            random_r = np.random.randint(0, 256)
+            random_g = np.random.randint(0, 256)
+            random_b = np.random.randint(0, 256)
+
+            v = [random_x, random_y, random_r, random_b, random_g]
+
+        elif color_scheme == 'bw':
+            random_bw = np.random.randint(0, 256)
+
+            v = [random_x, random_y, random_bw]
+
+        else:
+            return -1
 
         population.append(v)
 
@@ -100,7 +116,7 @@ def mutate_population(population
     return np.asarray(new_population)
 
 
-def add_perturbation_cifar10(population, original_image):
+def add_perturbation(population, original_image):
     """Function to add perturbations of a population to an image
 
     This function adds all perturbations of a population to one image
@@ -110,30 +126,38 @@ def add_perturbation_cifar10(population, original_image):
 
         :param population:
             a population of perturbations that should be added to an image
-        :param original_image: array with shape [32, 32, 3]
-            an image from the cifar10 dataset
+        :param original_image: array
+            array with shape [32, 32 ,3] if image from the cifar10 dataset
+            array with shape [28, 28] if image from MNIST
 
     Returns:
 
-        :return: an array of perturbated cifar10 images based on the population
+        :return: an array of perturbated images based on the population
+            -1 if original image neither cifar10 nor mnist
 
     """
     perturbed_images = []
     n_population = population.shape[0]
+    rgb_bw = original_image.shape
 
     for i in range(n_population):
         x = population[i][0]
         y = population[i][1]
 
         perturbed_image = np.copy(original_image)
-        perturbed_image[x][y] = population[i][2: 5]
+        if rgb_bw == (32, 32, 3):
+            perturbed_image[x][y] = population[i][2: 5]
+        elif rgb_bw == (28, 28):
+            perturbed_image[x][y] = population[i][2]
+        else:
+            return -1
 
         perturbed_images.append(perturbed_image)
 
     return np.asarray(perturbed_images)
 
 
-def evaluate_fitness_cifar10(model, target_category, image, population=None):
+def evaluate_fitness(model, target_category, image, population=None):
     """Function to evaluate the fitness of an image or the fitness of
     a population of perturbations against one image (CIFAR-10)
 
@@ -172,12 +196,16 @@ def evaluate_fitness_cifar10(model, target_category, image, population=None):
         population_fitness = []
         num_population = population.shape[0]
 
-        perturbated_images = add_perturbation_cifar10(population
-                                                      , original_image=image)
+        perturbated_images = add_perturbation(population
+                                              , original_image=image)
 
         for i in range(num_population):
-            prediction = model.predict(np.expand_dims(perturbated_images[i]
-                                                      , axis=0))
+
+            _image = np.expand_dims(perturbated_images[i], axis=0)
+            if _image.shape == (1, 28, 28):
+                _image = np.expand_dims(_image, axis=3)
+
+            prediction = model.predict(_image)
             fitness = prediction[0][target_category]
             population_fitness.append(fitness)
 
@@ -188,11 +216,11 @@ def evaluate_fitness_cifar10(model, target_category, image, population=None):
         return prediction[0][target_category]
 
 
-def differential_evolution_cifar10(model, target_category, original_image
-                                   , population_size: int=400
-                                   , generations: int=100
-                                   , early_stopping: bool=True
-                                   , early_stopping_threshold: float=0.9):
+def differential_evolution(model, target_category, original_image
+                           , population_size: int=400
+                           , max_generations: int=100
+                           , early_stopping: bool=True
+                           , early_stopping_threshold: float=0.9):
     """This function tries to find one-pixel perturbations on the CIFAR-10
        Dataset that trick the model so that it perdicts the target category
        instead of the original (mostly true) category
@@ -218,7 +246,7 @@ def differential_evolution_cifar10(model, target_category, original_image
             image from CIFAR-10 dataset
         :param population_size: int, optional
             desired population size (default is 400)
-        :param generations: int, optional
+        :param max_generations: int, optional
             desired number of generations (default is 100)
         :param early_stopping: bool, optional
             set early stopping on or of
@@ -230,23 +258,34 @@ def differential_evolution_cifar10(model, target_category, original_image
         :return:
     """
 
-    OverallTimeTracker = datetime.now()
-    population = initiate_population(population_size)
+    #OverallTimeTracker = datetime.now()
+    rgb_bw = original_image.shape
 
-    for g in range(generations):
-        mutated_population = mutate_population(population)
+    if rgb_bw == (32, 32, 3):
+        population = initiate_population(population_size)
+    elif rgb_bw == (28, 28):
+        population = initiate_population(population_size, 28, 28, 'bw')
+
+    for g in range(max_generations):
+        if rgb_bw == (32, 32, 3):
+            mutated_population = mutate_population(population)
+        elif rgb_bw == (28, 28):
+            mutated_population = mutate_population(population
+                                                   , v_min=np.zeros(3)
+                                                   , v_max=[28, 28, 256]
+                                                   )
         ##
         timetracker = datetime.now()
         ##
-        fitness_population = evaluate_fitness_cifar10(model
-                                                      , target_category
-                                                      , original_image
-                                                      , population)
+        fitness_population = evaluate_fitness(model
+                                              , target_category
+                                              , original_image
+                                              , population)
 
-        fitness_mut_population = evaluate_fitness_cifar10(model
-                                                          , target_category
-                                                          , original_image
-                                                          , mutated_population)
+        fitness_mut_population = evaluate_fitness(model
+                                                  , target_category
+                                                  , original_image
+                                                  , mutated_population)
 
         #Replace old generation
         for i in range(population_size):
@@ -261,19 +300,17 @@ def differential_evolution_cifar10(model, target_category, original_image
         index_argmax = np.argmax(fitness_mut_population)
         max_fitness = fitness_mut_population[index_argmax]
 
-        print("Generation %0d. Maximum fitness: %4d" % (g, max_fitness))
+        #print("Generation %0d. Maximum fitness: %4d" % (g, max_fitness))
         # early_stopping
         if early_stopping:
             if max_fitness >= early_stopping_threshold:
                 print("early stopping :)")
                 break
 
-    print("Overall time: " + str(datetime.now() - OverallTimeTracker))
+    #print("Overall time: " + str(datetime.now() - OverallTimeTracker))
 
     return_array = np.append(population[index_argmax]
                              , np.array(target_category))
     return_array = np.append(return_array, np.array(max_fitness))
 
     return return_array
-
-    #TODO: return the best perturbation incl. stats
