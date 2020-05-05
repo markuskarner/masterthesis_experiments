@@ -216,13 +216,17 @@ def evaluate_fitness(model, target_category, image, population=None):
         return prediction[0][target_category]
 
 
-def differential_evolution(model, target_category, original_image
-                           , population_size: int=400
-                           , max_generations: int=100
-                           , early_stopping: bool=True
-                           , early_stopping_threshold: float=0.9):
+def differential_evolution(model
+                           , target_category
+                           , original_image
+                           , original_category
+                           , image_index
+                           , population_size: int = 400
+                           , max_generations: int = 100
+                           , early_stopping: bool = True
+                           , early_stopping_threshold: float = 0.9):
     """This function tries to find one-pixel perturbations on the CIFAR-10
-       Dataset that trick the model so that it perdicts the target category
+       dataset that trick the model so that it predicts the target category
        instead of the original (mostly true) category
 
     Parameters:
@@ -244,6 +248,10 @@ def differential_evolution(model, target_category, original_image
                 9: "truck"
         :param original_image: array with shape [32,32,3]
             image from CIFAR-10 dataset
+        :param original_category: int
+            the original category of the image
+        :param image_index: int
+            the index within the image dataset that was used
         :param population_size: int, optional
             desired population size (default is 400)
         :param max_generations: int, optional
@@ -258,7 +266,6 @@ def differential_evolution(model, target_category, original_image
         :return:
     """
 
-    #OverallTimeTracker = datetime.now()
     rgb_bw = original_image.shape
 
     if rgb_bw == (32, 32, 3):
@@ -272,11 +279,9 @@ def differential_evolution(model, target_category, original_image
         elif rgb_bw == (28, 28):
             mutated_population = mutate_population(population
                                                    , v_min=np.zeros(3)
-                                                   , v_max=[28, 28, 256]
+                                                   , v_max=np.array(28, 28, 256)
                                                    )
-        ##
-        timetracker = datetime.now()
-        ##
+
         fitness_population = evaluate_fitness(model
                                               , target_category
                                               , original_image
@@ -304,13 +309,11 @@ def differential_evolution(model, target_category, original_image
         # early_stopping
         if early_stopping:
             if max_fitness >= early_stopping_threshold:
-                print("early stopping :)")
                 break
 
-    #print("Overall time: " + str(datetime.now() - OverallTimeTracker))
-
-    return_array = np.append(population[index_argmax]
-                             , np.array(target_category))
+    return_array = np.append(np.array(image_index), np.array(original_category))
+    return_array = np.append(return_array, np.array(target_category))
     return_array = np.append(return_array, np.array(max_fitness))
+    return_array = np.append(return_array, population[index_argmax])
 
     return return_array

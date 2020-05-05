@@ -3,11 +3,13 @@ import os
 import numpy as np
 import keras
 from keras.datasets import cifar10
+from multiprocessing import Pool
+import time
 
 num_classes = 10
 max_generations = 10
 
-save_dir = os.path.join(os.getcwd(), 'saved_models')
+save_dir = os.path.join(os.path.dirname(os.getcwd()), 'saved_models')
 model_name = 'keras_cifar10_trained_model.h5'
 
 model = keras.models.load_model(save_dir + '\\' + model_name)
@@ -17,13 +19,7 @@ model = keras.models.load_model(save_dir + '\\' + model_name)
 (x_train, y_train), (x_test, y_test) = cifar10.load_data()
 y_test = keras.utils.to_categorical(y_test, num_classes)
 
-
-for j in range(10, 20):
-    print("start - j: %0d" % j)
-    for i in range(10):
-        if i != np.argmax(y_test[j]):
-            print(de.differential_evolution(model, i, x_test[j]
-                                            , max_generations=
-                                                    max_generations))
-    print("end - j: %0d" % j)
-
+for i in range(0, 101):
+    #result = model.predict(np.expand_dims(x_test[i], axis=0))
+    #print(np.argmax(result))
+    print(np.argmax(y_test[i]))
