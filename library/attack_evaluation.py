@@ -97,4 +97,14 @@ def print_attack_result(model, original_image, y_original_image, perturbation1, 
 
     plt.show()
 
+def evaluate_perturbations_CIFAR10(model, original_image, y, perturbations):
+    nperturbations = perturbations.shape[0]
 
+    if nperturbations in (1, 2, 3):
+        rows = 1
+    elif nperturbations in (4, 5, 6):
+        rows = 2
+    else:
+        rows = 3
+
+    cols = (1 + nperturbations) / 2

@@ -7,7 +7,7 @@ from multiprocessing import Pool
 import time
 
 num_classes = 10
-max_generations = 10
+max_generations = 100
 
 save_dir = os.path.join(os.path.dirname(os.getcwd()), 'saved_models')
 model_name = 'keras_cifar10_trained_model.h5'
