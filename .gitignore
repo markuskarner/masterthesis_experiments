@@ -127,3 +127,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# don't sync (large) h5 models
+tests/saved_models
+
+# .idea folder
+.idea
