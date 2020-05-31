@@ -4,12 +4,11 @@ from datetime import datetime
 
 def initiate_population(population_size: int = 400
                         , x_dim: int = 32
-                        , y_dim: int = 32
-                        , color_scheme: str = 'RGB'):
-    """Function to initiate a population of image perturbations for CIFAR-10
+                        , y_dim: int = 32):
+    """Function to initiate a population of image perturbations in RGB
 
     The Function will return an array of one-pixel perturbations
-    for the CIFAR-10 image dataset.
+    for RGB images.
     Each perturbation consists of the following 5 Elements
         - Random x coordinate of the Image, U[0,32]
         - Random y coordinate of the Image, U[0,32]
@@ -24,14 +23,9 @@ def initiate_population(population_size: int = 400
             x dimension of images (default is 32)
         :param y_dim: int, optional
             y dimension of images (default is 32)
-        :param color_scheme: str, optional
-            color_scheme for population, either 'RGB' or 'bw' for black-white
-            (default is 'RGB')
 
     Return:
-        :return array of one-pixel perturbations for images in color-scheme
-            RGB or bw (black and white)
-            if color_scheme input is neither RGB nor bw return -1
+        :return array of one-pixel perturbations for images in color-scheme RGB
     """
     population = []
 
@@ -39,20 +33,11 @@ def initiate_population(population_size: int = 400
         random_x = np.random.randint(0, x_dim)
         random_y = np.random.randint(0, y_dim)
 
-        if color_scheme == 'RGB':
-            random_r = np.random.randint(0, 256)
-            random_g = np.random.randint(0, 256)
-            random_b = np.random.randint(0, 256)
+        random_r = np.random.randint(0, 256)
+        random_g = np.random.randint(0, 256)
+        random_b = np.random.randint(0, 256)
 
-            v = [random_x, random_y, random_r, random_b, random_g]
-
-        elif color_scheme == 'bw':
-            random_bw = np.random.randint(0, 256)
-
-            v = [random_x, random_y, random_bw]
-
-        else:
-            return -1
+        v = [random_x, random_y, random_r, random_b, random_g]
 
         population.append(v)
 
@@ -127,30 +112,22 @@ def add_perturbation(population, original_image):
         :param population:
             a population of perturbations that should be added to an image
         :param original_image: array
-            array with shape [32, 32 ,3] if image from the cifar10 dataset
-            array with shape [28, 28] if image from MNIST
+            array with shape [X, Y ,3]
 
     Returns:
 
         :return: an array of perturbated images based on the population
-            -1 if original image neither cifar10 nor mnist
 
     """
     perturbed_images = []
     n_population = population.shape[0]
-    rgb_bw = original_image.shape
 
     for i in range(n_population):
         x = population[i][0]
         y = population[i][1]
 
         perturbed_image = np.copy(original_image)
-        if rgb_bw == (32, 32, 3):
-            perturbed_image[x][y] = population[i][2: 5]
-        elif rgb_bw == (28, 28):
-            perturbed_image[x][y] = population[i][2]
-        else:
-            return -1
+        perturbed_image[x][y] = population[i][2: 5]
 
         perturbed_images.append(perturbed_image)
 
@@ -202,8 +179,6 @@ def evaluate_fitness(model, target_category, image, population=None):
         for i in range(num_population):
 
             _image = np.expand_dims(perturbated_images[i], axis=0)
-            if _image.shape == (1, 28, 28):
-                _image = np.expand_dims(_image, axis=3)
 
             prediction = model.predict(_image)
             fitness = prediction[0][target_category]
@@ -263,23 +238,28 @@ def differential_evolution(model
 
     Returns:
 
-        :return:
+        :return: -1 if neither CIFAR-10 image (32, 32, 3) nor ImageNet resized
+                 to (224, 224, 3)
     """
 
-    rgb_bw = original_image.shape
+    img_shape = original_image.shape
 
-    if rgb_bw == (32, 32, 3):
+    if img_shape == (32, 32, 3):
         population = initiate_population(population_size)
-    elif rgb_bw == (28, 28):
-        population = initiate_population(population_size, 28, 28, 'bw')
+    elif img_shape == (224, 224, 3):
+        population = initiate_population(population_size, 224, 224)
+    else:
+        return -1
 
     for g in range(max_generations):
-        if rgb_bw == (32, 32, 3):
+        if img_shape == (32, 32, 3):
             mutated_population = mutate_population(population)
-        elif rgb_bw == (28, 28):
+        elif img_shape == (224, 224, 3):
             mutated_population = mutate_population(population
                                                    , v_min=np.zeros(3)
-                                                   , v_max=np.array(28, 28, 256)
+                                                   , v_max=np.array(224
+                                                                    , 224
+                                                                    , 256)
                                                    )
 
         fitness_population = evaluate_fitness(model
