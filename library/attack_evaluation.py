@@ -2,6 +2,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from library import differential_evolution as de
 
+
 def get_cifar10_category_name(result_tuple):
     """This function returns the category name from the cifar10 image dataset
     based on the a result tuple (array length 10) or an integer value
@@ -13,7 +14,7 @@ def get_cifar10_category_name(result_tuple):
 
     Returns:
 
-        :return: string
+        :returns: string
                 0: "airplane"
                 1: "automobile"
                 2: "bird"
@@ -48,7 +49,8 @@ def get_cifar10_category_name(result_tuple):
     return categories.get(i, "InvalidCategory")
 
 
-def print_attack_result(model, original_image, y_original_image, perturbation1, perturbation2=None, dataset_name='cifar10'):
+def print_attack_result(model, original_image, y_original_image, perturbation1,
+                        perturbation2=None, dataset_name='cifar10'):
     plt.rcParams.update({'font.size': 15})
     columns = 2
     rows = 1
@@ -66,6 +68,7 @@ def print_attack_result(model, original_image, y_original_image, perturbation1, 
         axs[0].set_title(get_cifar10_category_name(y_original_image), **font)
     else:
         axs[0].set_title(y_original_image, **font)
+
     perturbed_image = de.add_perturbation(
         np.expand_dims(np.array(perturbation1), axis=0), original_image)
 
@@ -97,7 +100,8 @@ def print_attack_result(model, original_image, y_original_image, perturbation1, 
 
     plt.show()
 
-def evaluate_perturbations_CIFAR10(model, original_image, y, perturbations):
+
+def evaluate_perturbations_cifar10(model, original_image, y, perturbations):
     nperturbations = perturbations.shape[0]
 
     if nperturbations in (1, 2, 3):
@@ -108,3 +112,5 @@ def evaluate_perturbations_CIFAR10(model, original_image, y, perturbations):
         rows = 3
 
     cols = (1 + nperturbations) / 2
+
+    #UNDER CONSTRUCTION
