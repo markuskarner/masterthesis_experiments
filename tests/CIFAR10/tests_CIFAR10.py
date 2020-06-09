@@ -5,6 +5,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 import numpy as np
 import keras
+import tensorflow as tf
 import time
 from library import differential_evolution as de
 from library import ImagePickerCIFAR10
@@ -13,21 +14,23 @@ from multiprocessing import Pool
 
 
 num_classes = 10
-sample_size = 20
+sample_size = 10
 max_generations = 100
 multiprocessing = True
 
 save_dir = os.path.join(os.path.dirname(os.getcwd()), 'saved_models')
 model_name = 'VGG16_one_pixel_cifar10_trained_model.h5'
 
-model = keras.models.load_model(save_dir + '\\' + model_name)
+model = tf.keras.models.load_model(save_dir + '\\' + model_name)
 
 # The data, split between train and test sets:
 (x_train, y_train), (x_test, y_test) = cifar10.load_data()
 y_test = keras.utils.to_categorical(y_test, num_classes)
 
-# get 500 random images with true predictions, equal number per class
-image_indices = ImagePickerCIFAR10.get_cifar10_images(model, sample_size, num_classes)
+# get random images with true predictions, equal number per class
+image_indices = ImagePickerCIFAR10.get_cifar10_images(model
+                                                      , sample_size
+                                                      , num_classes)
 
 
 def f(j):
@@ -40,17 +43,18 @@ def f(j):
                                                 , j
                                                 , max_generations
                                                 =max_generations)
-            print(_result)
+            return _result
+
 
 start_time = time.time()
 
 if multiprocessing:
     if __name__ == '__main__':
-        p = Pool(processes=20)
-        result = p.map(f, image_indices)
-        print(result)
+        with Pool(processes=4) as p:
+            result = p.map(f, image_indices)
+            print(result)
 else:
     for j in image_indices:
-        f(j)
+        print(f(j))
 
 print(time.time()-start_time)

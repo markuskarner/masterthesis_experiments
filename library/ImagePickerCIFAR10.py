@@ -9,6 +9,9 @@ def get_cifar10_images(model
                        , num_images: int = 500
                        , num_classes: int = 10):
 
+    if num_images < num_classes:
+        raise Exception('The number of images should be'
+                        'greater than number of classes')
     # Load data
     (x_train, y_train), (x_test, y_test) = cifar10.load_data()
     y_test = keras.utils.to_categorical(y_test, num_classes)
