@@ -22,8 +22,8 @@ num_classes = 10
 #indexOfImage = 0
 
 #
-perturbation1 = np.array([19,  22,  10, 254,  75])
-indexOfImage = 16
+perturbation1 = np.array([11,  23,  73, 246,  7])
+indexOfImage = 5
 
 
 # The data, split between train and test sets:
