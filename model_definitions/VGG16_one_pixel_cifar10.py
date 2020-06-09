@@ -1,102 +1,29 @@
-import tensorflow as tf
-import keras
-import os
+#parts from https://keras.io/examples/cifar10_cnn/
+
+from __future__ import print_function
+
 import time
-import matplotlib.pyplot as plt
+
+import keras
 from keras.datasets import cifar10
 from keras.preprocessing.image import ImageDataGenerator
-from keras.applications.vgg16 import VGG16
-from keras.layers import Dropout, Dense, Flatten
-from keras.models import Model
+from keras.models import Sequential
+from keras.layers import Dense, Dropout, Flatten
+from keras.layers import Conv2D, MaxPooling2D
+import matplotlib.pyplot as plt
+import os
 from library import CustomStopper
 from sklearn.model_selection import train_test_split
 
+
 batch_size = 256
 num_classes = 10
-epochs = 100
-validation_split = 0.1
-input_shape = (32, 32, 3)
-multi_gpus = False
-add_dropout = True
-less_neurons_fc_layers = True   #only if dropout true
-dropout_percent = 0.6
-data_augmentation = False
+epochs = 200
+data_augmentation = True
+dropout_percent = 0.5
 save_dir = os.path.join(os.path.dirname(os.getcwd()), 'tests')
 save_dir = os.path.join(save_dir, 'saved_models')
-model_name = 'VGG16_CIFAR10_trained_model.h5'
-
-# initialize optimizer & early stopping
-opt = keras.optimizers.SGD(lr=1e-2, momentum=0.9, decay=1e-2 / epochs)
-#callback = CustomStopper.CustomStopper(monitor='val_loss', patience=2, verbose=1, start_epoch=10)
-callback = keras.callbacks.EarlyStopping(monitor='val_loss', patience=10, verbose=1)
-
-# define model
-def _create_model():
-    model = VGG16(
-        weights=None,
-        include_top=True,
-        classes=num_classes,
-        input_shape=input_shape
-    )
-
-    if add_dropout:
-        # dropout https://stackoverflow.com/questions/42475381/add-dropout-layers-between-pretrained-dense-layers-in-keras
-        # reduce neurons if parameter is set https://github.com/keras-team/keras/issues/4465
-        # Store the fully connected layers, reduce neurons if parameter is set
-
-        if less_neurons_fc_layers:
-            x = Flatten(name='flatten')(model.layers[-5].output)
-            x = Dense(2048, activation='relu', name='fc1')(x)
-            x = Dropout(dropout_percent, name='dropout_1')(x)
-            x = Dense(2048, activation='relu', name='fc2')(x)
-            x = Dropout(dropout_percent, name='dropout_2')(x)
-            predictors = Dense(10, activation='softmax', name='predictions')(x)
-        else:   # only add dropout to exiting layers
-            # get existing layers
-            fc1 = model.layers[-3]
-            fc2 = model.layers[-2]
-            predictions = model.layers[-1]
-            # Create the dropout layers
-            dropout1 = Dropout(dropout_percent)
-            dropout2 = Dropout(dropout_percent)
-            # Reconnect the layers
-            x = dropout1(fc1.output)
-            x = fc2(x)
-            x = dropout2(x)
-            predictors = predictions(x)
-
-        # Create a new model
-        updated_model = Model(input=model.input, output=predictors)
-
-        return updated_model
-    else:
-        return model
-
-
-if multi_gpus:
-    # Create a MirroredStrategy.
-    strategy = tf.distribute.MirroredStrategy()
-    print("Number of devices: {}".format(strategy.num_replicas_in_sync))
-
-    # Open a strategy scope.
-    with strategy.scope():
-        # Everything that creates variables should be under the strategy scope.
-        # In general this is only model construction & `compile()`.
-        model = _create_model()
-
-        # Compile the model
-        model.compile(loss=keras.losses.categorical_crossentropy
-                      , optimizer=opt
-                      , metrics=["accuracy"])
-
-else:
-    model = _create_model()
-
-    # Compile the model
-    model.compile(loss=keras.losses.categorical_crossentropy
-                  , optimizer=opt
-                  , metrics=["accuracy"])
-
+model_name = 'VGG16_one_pixel_cifar10_trained_model.h5'
 
 # The data, split between train and test sets:
 (x_train, y_train), (x_test, y_test) = cifar10.load_data()
@@ -105,8 +32,51 @@ print(x_train.shape[0], 'train samples')
 print(x_test.shape[0], 'test samples')
 
 # Convert class vectors to binary class matrices.
-y_test = keras.utils.to_categorical(y_test, num_classes)
 y_train = keras.utils.to_categorical(y_train, num_classes)
+y_test = keras.utils.to_categorical(y_test, num_classes)
+
+
+def _define_model():
+    _model = Sequential()
+    _model.add(Conv2D(filters=64, kernel_size=(3, 3), strides=(1, 1)
+                      , padding='same'
+                      , input_shape=x_train.shape[1:]
+                      , activation='relu'))
+    _model.add(Conv2D(64, (3, 3), activation='relu', padding='same'))
+    _model.add(MaxPooling2D(2, 2))
+    _model.add(Conv2D(128, (3, 3), activation='relu', padding='same'))
+    _model.add(Conv2D(128, (3, 3), activation='relu', padding='same'))
+    _model.add(MaxPooling2D(2, 2))
+    _model.add(Conv2D(256, (3, 3), activation='relu', padding='same'))
+    _model.add(Conv2D(256, (3, 3), activation='relu', padding='same'))
+    _model.add(Conv2D(256, (3, 3), activation='relu', padding='same'))
+    _model.add(MaxPooling2D(2, 2))
+    _model.add(Conv2D(512, (3, 3), activation='relu', padding='same'))
+    _model.add(Conv2D(512, (3, 3), activation='relu', padding='same'))
+    _model.add(Conv2D(512, (3, 3), activation='relu', padding='same'))
+    _model.add(MaxPooling2D(2, 2))
+    _model.add(Conv2D(512, (3, 3), activation='relu', padding='same'))
+    _model.add(Conv2D(512, (3, 3), activation='relu', padding='same'))
+    _model.add(Conv2D(512, (3, 3), activation='relu', padding='same'))
+    _model.add(MaxPooling2D(2, 2))
+    _model.add(Flatten())
+    _model.add(Dense(2048, activation='relu'))
+    _model.add(Dropout(dropout_percent))
+    _model.add(Dense(2048, activation='relu'))
+    _model.add(Dropout(dropout_percent))
+    _model.add(Dense(num_classes, activation='softmax'))
+
+    return _model
+
+
+# initialize optimizer & early stopping
+opt = keras.optimizers.SGD(lr=1e-2, momentum=0.9, decay=1e-2 / epochs)
+callback = keras.callbacks.EarlyStopping(monitor='val_loss', patience=20, verbose=1)
+
+model = _define_model()
+model.compile(loss='categorical_crossentropy',
+              optimizer=opt,
+              metrics=['accuracy'])
 
 x_train = x_train.astype('float32')
 x_test = x_test.astype('float32')
@@ -124,7 +94,7 @@ if not data_augmentation:
     history = model.fit(x_train, y_train,
                         batch_size=batch_size,
                         epochs=epochs,
-                        validation_split=validation_split,
+                        validation_split=0.1,
                         shuffle=True,
                         callbacks=[callback],
                         verbose=1)
@@ -143,7 +113,7 @@ else:
         samplewise_std_normalization=False,  # divide each input by its std
         zca_whitening=False,  # apply ZCA whitening
         zca_epsilon=1e-06,  # epsilon for ZCA whitening
-        rotation_range=90,  # randomly rotate images in the range (degrees, 0 to 180)
+        rotation_range=180,  # randomly rotate images in the range (degrees, 0 to 180)
         # randomly shift images horizontally (fraction of total width)
         width_shift_range=0.1,
         # randomly shift images vertically (fraction of total height)
@@ -205,8 +175,8 @@ plt.title('model accuracy')
 plt.ylabel('accuracy')
 plt.xlabel('epoch')
 plt.legend(['train', 'test'], loc='upper left')
-plt.savefig(os.path.join('model_history', 'VGG16_CIFAR10_model_accuracy.png'))
-plt.clf() # clear plot
+plt.savefig(os.path.join('model_history', 'VGG16_one_pixel_CIFAR10_model_accuracy.png'))
+plt.clf()  # clear plot
 
 # summarize history for loss
 plt.plot(history.history['loss'])
@@ -215,4 +185,4 @@ plt.title('model loss')
 plt.ylabel('loss')
 plt.xlabel('epoch')
 plt.legend(['train', 'test'], loc='upper left')
-plt.savefig(os.path.join('model_history', 'VGG16_CIFAR10_model_loss.png'))
+plt.savefig(os.path.join('model_history', 'VGG16_one_pixel_CIFAR10_model_loss.png'))

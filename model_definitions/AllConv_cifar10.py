@@ -9,13 +9,15 @@ from keras.layers import Dense, Dropout, Activation, Flatten
 from keras.layers import Conv2D, AveragePooling2D
 import matplotlib.pyplot as plt
 import os
+from library import CustomStopper
 
 batch_size = 256
 num_classes = 10
-epochs = 10
+epochs = 50
 data_augmentation = False
 num_predictions = 20
-save_dir = os.path.join(os.getcwd(), 'saved_models')
+save_dir = os.path.join(os.path.dirname(os.getcwd()), 'tests')
+save_dir = os.path.join(save_dir, 'saved_models')
 model_name = 'AllConv_cifar10_trained_model.h5'
 
 # The data, split between train and test sets:
@@ -54,7 +56,7 @@ def _define_model():
 
 # initialize optimizer & early stopping
 opt = keras.optimizers.SGD(lr=1e-2, momentum=0.9, decay=1e-2 / epochs)
-callback = keras.callbacks.EarlyStopping(monitor='loss', patience=3, verbose=1)
+callback = CustomStopper.CustomStopper(monitor='val_loss', patience=2, verbose=1, start_epoch=10)
 
 model = _define_model()
 model.compile(loss='categorical_crossentropy',
@@ -68,7 +70,7 @@ x_test /= 255
 
 print(model.summary())
 
-exit()
+#exit() # uncomment if you want to print the model summary only before the start of the training
 
 if not data_augmentation:
     print('Not using data augmentation.')
@@ -77,7 +79,7 @@ if not data_augmentation:
                         epochs=epochs,
                         validation_split=0.1,
                         shuffle=True,
-                        callbacks=[callback],
+                        #callbacks=[callback],
                         verbose=1)
 else:
     print('Using real-time data augmentation.')
@@ -144,7 +146,7 @@ plt.title('model accuracy')
 plt.ylabel('accuracy')
 plt.xlabel('epoch')
 plt.legend(['train', 'test'], loc='upper left')
-plt.savefig('AllConv_CIFAR10_model_accuracy.png')
+plt.savefig(os.path.join('model_history', 'AllConv_CIFAR10_model_accuracy.png'))
 plt.clf()  # clear plot
 
 # summarize history for loss
@@ -154,4 +156,4 @@ plt.title('model loss')
 plt.ylabel('loss')
 plt.xlabel('epoch')
 plt.legend(['train', 'test'], loc='upper left')
-plt.savefig('AllConv_CIFAR10_model_loss.png')
+plt.savefig(os.path.join('model_history', 'AllConv_CIFAR10_model_loss.png'))
