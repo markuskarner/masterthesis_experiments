@@ -1,4 +1,4 @@
-# masterthesis_experiments
+# Improving the robustness of deep convolutional neural networks against one-pixel attacks
 
 In my Masterthesis I try to increase the robustness of convolutional neural networks against one pixel attacks.
 
