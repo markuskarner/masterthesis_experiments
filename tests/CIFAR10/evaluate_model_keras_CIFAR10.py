@@ -6,7 +6,7 @@ from keras.datasets import cifar10
 num_classes = 10
 
 save_dir = os.path.join(os.path.dirname(os.getcwd()), 'saved_models')
-model_name = 'VGG16_CIFAR10_trained_model.h5'
+model_name = 'keras_cifar10_trained_model.h5'
 
 model = tf.keras.models.load_model(save_dir + '\\' + model_name)
 

@@ -1,5 +1,5 @@
 import numpy as np
-from datetime import datetime
+import time
 
 
 def initiate_population(population_size: int = 400
@@ -252,6 +252,8 @@ def differential_evolution(model
         return -1
 
     for g in range(max_generations):
+        #print('start generation %d' % g)
+        #start_time = time.time()
         if img_shape == (32, 32, 3):
             mutated_population = mutate_population(population)
         elif img_shape == (224, 224, 3):
@@ -290,6 +292,8 @@ def differential_evolution(model
         if early_stopping:
             if max_fitness >= early_stopping_threshold:
                 break
+
+        #print(time.time() - start_time)
 
     return_array = np.append(np.array(image_index), np.array(original_category))
     return_array = np.append(return_array, np.array(target_category))
