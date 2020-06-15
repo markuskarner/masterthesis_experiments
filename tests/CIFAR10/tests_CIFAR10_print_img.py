@@ -2,6 +2,7 @@ import os
 from matplotlib import pyplot as plt
 import numpy as np
 import keras
+import tensorflow as tf
 from keras.datasets import cifar10
 from library import differential_evolution as de
 from library import attack_evaluation as atk
@@ -22,8 +23,8 @@ num_classes = 10
 #indexOfImage = 0
 
 #
-perturbation1 = np.array([11,  23,  73, 246,  7])
-indexOfImage = 5
+perturbation1 = np.array([20, 17, 255, 15, 122])
+indexOfImage = 9771
 
 
 # The data, split between train and test sets:
@@ -33,7 +34,7 @@ y_test = keras.utils.to_categorical(y_test, num_classes)
 save_dir = os.path.join(os.path.dirname(os.getcwd()), 'saved_models')
 model_name = 'keras_cifar10_trained_model.h5'
 
-model = keras.models.load_model(save_dir + '\\' + model_name)
+model = tf.keras.models.load_model(save_dir + '\\' + model_name)
 
 atk.print_attack_result(model, x_test[indexOfImage]
                         , y_test[indexOfImage]

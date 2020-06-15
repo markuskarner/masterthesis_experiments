@@ -5,9 +5,7 @@ import tensorflow as tf
 import time
 from library import differential_evolution as de
 from library import ImagePickerCIFAR10
-from library import multi_gpu
 from keras.datasets import cifar10
-
 
 
 num_classes = 10
