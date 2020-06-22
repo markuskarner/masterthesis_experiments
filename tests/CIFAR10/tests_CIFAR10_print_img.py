@@ -23,8 +23,8 @@ num_classes = 10
 #indexOfImage = 0
 
 #
-perturbation1 = np.array([9, 24, 54, 40, 3])
-indexOfImage = 3206
+perturbation1 = np.array([18, 20, 105, 124, 148])
+indexOfImage = 2051
 
 
 # The data, split between train and test sets:
@@ -32,7 +32,7 @@ indexOfImage = 3206
 y_test = keras.utils.to_categorical(y_test, num_classes)
 
 save_dir = os.path.join(os.path.dirname(os.getcwd()), 'saved_models')
-model_name = 'improved_keras_cifar10_trained_model.h5'
+model_name = 'keras_cifar10_trained_model.h5'
 
 model = tf.keras.models.load_model(save_dir + '\\' + model_name)
 

@@ -2,11 +2,14 @@ import os
 import keras
 import tensorflow as tf
 from keras.datasets import cifar10
+from sklearn.metrics import classification_report
+import numpy as np
 
 num_classes = 10
+multi_class_evaluation = True
 
 save_dir = os.path.join(os.path.dirname(os.getcwd()), 'saved_models')
-model_name = 'keras_cifar10_trained_model.h5'
+model_name = 'vgg16_one_pixel_cifar10_trained_model.h5'
 
 model = tf.keras.models.load_model(save_dir + '\\' + model_name)
 
@@ -20,10 +23,16 @@ x_test = x_test.astype('float32')
 x_train /= 255
 x_test /= 255
 
-# Score trained model.
-scores = model.evaluate(x_test, y_test, verbose=1)
-print('Test loss:', scores[0])
-print('Test accuracy:', scores[1])
+
+if multi_class_evaluation:
+    Y_test = np.argmax(y_test, axis=1)  # Convert one-hot to index
+    y_pred = model.predict_classes(x_test)
+    print(classification_report(Y_test, y_pred))
+else:
+    # Score trained model.
+    scores = model.evaluate(x_test, y_test, verbose=1)
+    print('Test loss:', scores[0])
+    print('Test accuracy:', scores[1])
 
 #print(model.metrics_names)
-print(model.summary())
+#print(model.summary())

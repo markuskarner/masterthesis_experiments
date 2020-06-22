@@ -18,7 +18,7 @@ epochs = 300
 data_augmentation = True
 save_dir = os.path.join(os.path.dirname(os.getcwd()), 'tests')
 save_dir = os.path.join(save_dir, 'saved_models')
-model_name = 'keras_cifar10_trained_model_2.h5'
+model_name = 'keras_cifar10_trained_model.h5'
 
 # The data, split between train and test sets:
 (x_train, y_train), (x_test, y_test) = cifar10.load_data()
@@ -157,7 +157,7 @@ plt.title('model accuracy')
 plt.ylabel('accuracy')
 plt.xlabel('epoch')
 plt.legend(['train', 'test'], loc='upper left')
-plt.savefig(os.path.join('model_history', 'keras_CIFAR10_model_accuracy_2.png'))
+plt.savefig(os.path.join('model_history', 'keras_CIFAR10_model_accuracy.png'))
 plt.clf()  # clear plot
 
 # summarize history for loss
@@ -167,4 +167,4 @@ plt.title('model loss')
 plt.ylabel('loss')
 plt.xlabel('epoch')
 plt.legend(['train', 'test'], loc='upper left')
-plt.savefig(os.path.join('model_history', 'keras_CIFAR10_model_loss_2.png'))
+plt.savefig(os.path.join('model_history', 'keras_CIFAR10_model_loss.png'))
