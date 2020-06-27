@@ -5,11 +5,14 @@ from keras.datasets import cifar10
 from sklearn.metrics import classification_report
 import numpy as np
 
+#use cpu only
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+
 num_classes = 10
 multi_class_evaluation = True
 
 save_dir = os.path.join(os.path.dirname(os.getcwd()), 'saved_models')
-model_name = 'vgg16_one_pixel_cifar10_trained_model.h5'
+model_name = 'improved_allconv_cifar10_trained_model.h5'
 
 model = tf.keras.models.load_model(save_dir + '\\' + model_name)
 
